@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Host — Paraco Trivia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #1B3A6B;
+    --primary-dark: #122850;
+    --accent: #5BA4CF;
+    --dark: #0c1724;
+    --dark2: #111f30;
+    --dark3: #182a3e;
+    --border: #1d3352;
+    --text: #eef2f7;
+    --muted: #6b90b0;
+    --green: #22c55e;
+    --blue: #3b82f6;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--dark);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .container { max-width: 1000px; margin: 0 auto; }
+
+  header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: var(--primary); letter-spacing: 2px; }
+  .badge { background: var(--dark3); border: 1px solid var(--border); border-radius: 6px; padding: 0.25rem 0.6rem; font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .nav-links { margin-left: auto; display: flex; gap: 0.6rem; }
+  .nav-link { padding: 0.4rem 0.8rem; border-radius: 8px; background: var(--dark3); border: 1px solid var(--border); color: var(--muted); text-decoration: none; font-size: 0.8rem; transition: all 0.2s; }
+  .nav-link:hover { color: var(--text); border-color: #555; }
+
+  .layout { display: grid; grid-template-columns: 1fr 320px; gap: 1.5rem; }
+
+  /* Left: question + controls */
+  .main-panel { }
+
+  .phase-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--dark2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+  .phase-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .phase-val { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 1px; color: var(--accent); }
+  .q-counter { margin-left: auto; font-size: 0.85rem; color: var(--muted); }
+  .q-counter span { color: var(--text); font-weight: 600; }
+
+  /* Timer */
+  .timer-wrap { text-align: center; margin: 1rem 0; }
+  .timer-ring-wrap { position: relative; width: 100px; height: 100px; margin: 0 auto; }
+  .timer-ring { transform: rotate(-90deg); }
+  .timer-ring circle { fill: none; stroke-width: 6; }
+  .timer-ring .bg { stroke: var(--dark3); }
+  .timer-ring .fg { stroke: var(--primary); stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+  .timer-num {
+    position: absolute;
+    inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    color: var(--text);
+  }
+
+  /* Current question preview */
+  .q-preview {
+    background: var(--dark2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+  .q-cat { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem; }
+  .q-text { font-size: 1.05rem; font-weight: 500; line-height: 1.5; margin-bottom: 1rem; }
+  .choices-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+  .choice-item {
+    background: var(--dark3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.65rem 0.75rem;
+    font-size: 0.85rem;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .choice-item.correct { border-color: var(--green); background: rgba(34,197,94,0.1); }
+  .choice-lbl { width: 22px; height: 22px; border-radius: 50%; background: var(--border); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600; flex-shrink: 0; }
+  .choice-item.correct .choice-lbl { background: var(--green); color: #000; }
+
+  /* Control buttons */
+  .controls { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+  .btn {
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--radius);
+    border: none;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex: 1;
+    min-width: 120px;
+  }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-secondary { background: var(--dark3); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--primary); color: var(--primary); }
+  .btn-gold { background: var(--accent); color: #000; }
+  .btn-gold:hover { background: #e0a000; }
+  .btn-green { background: var(--green); color: #000; }
+  .btn-green:hover { background: #16a34a; }
+  .btn-danger { background: #ef4444; color: white; }
+  .btn-danger:hover { background: #dc2626; }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  /* Right: sidebar */
+  .sidebar { display: flex; flex-direction: column; gap: 1.25rem; }
+
+  .panel {
+    background: var(--dark2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+  }
+  .panel-title { font-family: 'Bebas Neue', sans-serif; font-size: 1rem; letter-spacing: 1.5px; color: var(--accent); margin-bottom: 0.75rem; }
+
+  /* Answer tracker */
+  .answer-tally { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+  .tally-bar-wrap { flex: 1; background: var(--dark3); border-radius: 999px; height: 8px; overflow: hidden; }
+  .tally-bar { height: 100%; border-radius: 999px; background: var(--primary); transition: width 0.4s; }
+  .tally-label { font-size: 0.8rem; color: var(--muted); min-width: 80px; }
+  .tally-count { font-size: 0.8rem; color: var(--text); min-width: 20px; text-align: right; }
+
+  /* Players list */
+  .player-row {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+  }
+  .player-row:last-child { border-bottom: none; }
+  .player-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+  .player-dot.answered { background: var(--accent); }
+  .player-name { flex: 1; }
+  .player-score { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; color: var(--primary); }
+
+  /* Queue preview */
+  .queue-item {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  .queue-item:last-child { border-bottom: none; }
+  .queue-item.current { color: var(--text); }
+  .queue-num { font-family: 'Bebas Neue', sans-serif; font-size: 1rem; color: var(--primary); width: 1.5rem; flex-shrink: 0; }
+
+  .empty-state { color: var(--muted); font-size: 0.85rem; font-style: italic; }
+
+  @media (max-width: 720px) {
+    .layout { grid-template-columns: 1fr; }
+    .choices-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <img src="Paraco_Logo.png" alt="Paraco" style="height:42px;width:auto;filter:brightness(0) invert(1)">
+    <div class="badge">Host</div>
+    <nav class="nav-links">
+      <a href="setup.html" class="nav-link">Setup</a>
+      <a href="stage.html" class="nav-link" target="_blank">Stage ↗</a>
+      <a href="join.html" class="nav-link" target="_blank">Join ↗</a>
+    </nav>
+  </header>
+
+  <div class="layout">
+    <!-- Main panel -->
+    <div class="main-panel">
+      <div class="phase-bar">
+        <div>
+          <div class="phase-label">Phase</div>
+          <div class="phase-val" id="phaseVal">LOBBY</div>
+        </div>
+        <div>
+          <div class="phase-label">Question</div>
+          <div class="phase-val" id="qCounterVal">—</div>
+        </div>
+        <div>
+          <div class="phase-label">Answers In</div>
+          <div class="phase-val" id="answersInVal">0 / 0</div>
+        </div>
+        <div style="margin-left:auto">
+          <div class="timer-ring-wrap" id="timerWrap" style="display:none">
+            <svg class="timer-ring" width="100" height="100" viewBox="0 0 100 100">
+              <circle class="bg" cx="50" cy="50" r="44"/>
+              <circle class="fg" id="timerArc" cx="50" cy="50" r="44"
+                stroke-dasharray="276.5" stroke-dashoffset="0"/>
+            </svg>
+            <div class="timer-num" id="timerNum">20</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Question preview -->
+      <div class="q-preview" id="qPreview">
+        <div class="empty-state" id="noGameMsg">No game configured yet. Go to <a href="setup.html" style="color:var(--primary)">Setup</a> to select categories and configure the game.</div>
+        <div id="qContent" style="display:none">
+          <div class="q-cat" id="qCatLabel"></div>
+          <div class="q-text" id="qText"></div>
+          <div class="choices-grid" id="choicesGrid"></div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="controls" id="controlsBar">
+        <button class="btn btn-primary" id="btnNext" onclick="hostAction('next')">Next Question</button>
+        <button class="btn btn-gold" id="btnReveal" onclick="hostAction('reveal')" disabled>Reveal Answer</button>
+        <button class="btn btn-secondary" id="btnScores" onclick="hostAction('scores')">Show Scores</button>
+        <button class="btn btn-green" id="btnEnd" onclick="hostAction('end')">End Game</button>
+        <button class="btn btn-danger" id="btnReset" onclick="hostAction('reset')">Reset</button>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <!-- Answer tracker -->
+      <div class="panel">
+        <div class="panel-title">Answer Tracker</div>
+        <div id="answerTracker">
+          <div class="empty-state">No active question</div>
+        </div>
+      </div>
+
+      <!-- Live scores -->
+      <div class="panel">
+        <div class="panel-title">Live Scores</div>
+        <div id="playerRoster">
+          <div class="empty-state">No players yet</div>
+        </div>
+      </div>
+
+      <!-- Queue -->
+      <div class="panel">
+        <div class="panel-title">Question Queue</div>
+        <div id="queuePreview">
+          <div class="empty-state">No game configured</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="questions.js"></script>
+<script src="state.js"></script>
+<script>
+  GameState.init();
+  let timerInterval = null;
+  let timerEnd = null;
+
+  function getQuestionObj(cq) {
+    if (!cq) return null;
+    const cat = TRIVIA_DATA.categories.find(c => c.id === cq.categoryId);
+    if (!cat) return null;
+    return { q: cat.questions.find(q => q.id === cq.questionId), cat };
+  }
+
+  function hostAction(action) {
+    const state = GameState.get();
+
+    if (action === 'reset') {
+      if (!confirm('Reset the entire game? All scores and progress will be lost.')) return;
+      clearTimer();
+      GameState.reset();
+      return;
+    }
+
+    if (action === 'next') {
+      const nextIdx = (state.currentIndex ?? -1) + 1;
+      if (nextIdx >= (state.questionQueue || []).length) {
+        alert('No more questions! End the game or reset.'); return;
+      }
+      clearTimer();
+      const cq = state.questionQueue[nextIdx];
+      const timeLimit = state.timeLimit || 20;
+      const timerStart = Date.now();
+      GameState.set({
+        phase: 'question',
+        currentIndex: nextIdx,
+        currentQuestion: cq,
+        answers: {},
+        showAnswer: false,
+        timerStart
+      });
+      startTimer(timerStart, timeLimit);
+      return;
+    }
+
+    if (action === 'reveal') {
+      clearTimer();
+      // Award points
+      const q = getQuestionObj(state.currentQuestion);
+      if (q && q.q) {
+        const answers = state.answers || {};
+        const players = { ...(state.players || {}) };
+        Object.entries(answers).forEach(([name, choice]) => {
+          if (choice === q.q.answer) {
+            players[name] = { ...(players[name] || {}), score: ((players[name] || {}).score || 0) + 100 };
+          }
+        });
+        GameState.set({ phase: 'reveal', showAnswer: true, players });
+      } else {
+        GameState.set({ phase: 'reveal', showAnswer: true });
+      }
+      return;
+    }
+
+    if (action === 'scores') {
+      clearTimer();
+      GameState.set({ phase: 'scores' });
+      return;
+    }
+
+    if (action === 'end') {
+      clearTimer();
+      GameState.set({ phase: 'ended' });
+      return;
+    }
+  }
+
+  function startTimer(start, limit) {
+    clearTimer();
+    timerEnd = start + limit * 1000;
+    document.getElementById('timerWrap').style.display = 'block';
+    const circumference = 2 * Math.PI * 44;
+    function tick() {
+      const remaining = Math.max(0, Math.ceil((timerEnd - Date.now()) / 1000));
+      document.getElementById('timerNum').textContent = remaining;
+      const pct = remaining / limit;
+      const arc = document.getElementById('timerArc');
+      arc.style.strokeDashoffset = circumference * (1 - pct);
+      arc.style.stroke = remaining <= 5 ? '#ef4444' : (remaining <= 10 ? var_gold() : 'var(--primary)');
+      if (remaining <= 0) {
+        clearTimer();
+        // Auto-reveal after time up
+        const s = GameState.get();
+        if (s.phase === 'question') {
+          setTimeout(() => hostAction('reveal'), 500);
+        }
+      }
+    }
+    tick();
+    timerInterval = setInterval(tick, 250);
+  }
+
+  function var_gold() { return '#5BA4CF'; }
+
+  function clearTimer() {
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    document.getElementById('timerWrap').style.display = 'none';
+  }
+
+  function renderState(state) {
+    const phase = state.phase || 'lobby';
+    document.getElementById('phaseVal').textContent = phase.toUpperCase();
+
+    const queue = state.questionQueue || [];
+    const idx = state.currentIndex ?? -1;
+    document.getElementById('qCounterVal').textContent = queue.length ? `${Math.max(0, idx + 1)} / ${queue.length}` : '—';
+
+    // Player count for answers
+    const playerNames = Object.keys(state.players || {});
+    const answered = Object.keys(state.answers || {}).length;
+    document.getElementById('answersInVal').textContent = `${answered} / ${playerNames.length}`;
+
+    // Buttons
+    const inQuestion = phase === 'question';
+    const inReveal = phase === 'reveal';
+    const hasQueue = queue.length > 0;
+    document.getElementById('btnNext').disabled = !hasQueue || (phase === 'question');
+    document.getElementById('btnReveal').disabled = !inQuestion;
+    document.getElementById('btnScores').disabled = phase === 'lobby' || phase === 'scores';
+
+    // Question preview
+    const cq = state.currentQuestion;
+    if (cq) {
+      const obj = getQuestionObj(cq);
+      document.getElementById('noGameMsg').style.display = 'none';
+      document.getElementById('qContent').style.display = 'block';
+      if (obj && obj.q) {
+        const cat = TRIVIA_DATA.categories.find(c => c.id === cq.categoryId);
+        document.getElementById('qCatLabel').textContent = cat ? `${cat.emoji} ${cat.name}` : '';
+        document.getElementById('qText').textContent = obj.q.question;
+        const labels = ['A','B','C','D'];
+        document.getElementById('choicesGrid').innerHTML = obj.q.choices.map((ch, i) => `
+          <div class="choice-item ${(state.showAnswer && i === obj.q.answer) ? 'correct' : ''}">
+            <div class="choice-lbl">${labels[i] || i+1}</div>
+            <span>${ch}</span>
+          </div>
+        `).join('');
+      }
+    } else if (!hasQueue) {
+      document.getElementById('noGameMsg').style.display = 'block';
+      document.getElementById('qContent').style.display = 'none';
+    } else {
+      document.getElementById('noGameMsg').style.display = 'none';
+      document.getElementById('qContent').style.display = 'none';
+    }
+
+    // Answer tracker
+    const tracker = document.getElementById('answerTracker');
+    if (cq && playerNames.length > 0) {
+      const obj = getQuestionObj(cq);
+      const answers = state.answers || {};
+      const total = playerNames.length;
+      const doneCount = Object.keys(answers).length;
+      if (obj && obj.q) {
+        const labels = ['A','B','C','D'];
+        const choiceCounts = obj.q.choices.map((_, i) => Object.values(answers).filter(a => a === i).length);
+        tracker.innerHTML = `
+          <div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.75rem">${doneCount}/${total} answered</div>
+          ${obj.q.choices.map((ch, i) => `
+            <div class="answer-tally">
+              <div class="tally-label">${labels[i] || i+1}: ${ch.substring(0,15)}${ch.length > 15 ? '…' : ''}</div>
+              <div class="tally-bar-wrap"><div class="tally-bar" style="width:${total > 0 ? (choiceCounts[i]/total*100) : 0}%"></div></div>
+              <div class="tally-count">${choiceCounts[i]}</div>
+            </div>
+          `).join('')}
+        `;
+      } else {
+        tracker.innerHTML = `<div style="font-size:0.8rem;color:var(--muted)">${doneCount}/${total} answered</div>`;
+      }
+    } else {
+      tracker.innerHTML = '<div class="empty-state">No active question</div>';
+    }
+
+    // Players
+    const roster = document.getElementById('playerRoster');
+    if (playerNames.length === 0) {
+      roster.innerHTML = '<div class="empty-state">No players yet</div>';
+    } else {
+      const sorted = [...playerNames].sort((a, b) => ((state.players[b]||{}).score||0) - ((state.players[a]||{}).score||0));
+      roster.innerHTML = sorted.map(name => {
+        const hasAnswered = (state.answers || {})[name] !== undefined;
+        return `<div class="player-row">
+          <div class="player-dot ${hasAnswered ? 'answered' : ''}"></div>
+          <div class="player-name">${name}</div>
+          <div class="player-score">${(state.players[name]||{}).score||0}</div>
+        </div>`;
+      }).join('');
+    }
+
+    // Queue
+    const queueEl = document.getElementById('queuePreview');
+    if (queue.length === 0) {
+      queueEl.innerHTML = '<div class="empty-state">No game configured</div>';
+    } else {
+      const show = queue.slice(Math.max(0, idx - 1), idx + 5);
+      const startNum = Math.max(0, idx - 1);
+      queueEl.innerHTML = show.map((item, i) => {
+        const absIdx = startNum + i;
+        const cat = TRIVIA_DATA.categories.find(c => c.id === item.categoryId);
+        const catName = cat ? cat.emoji + ' ' + cat.name : item.categoryId;
+        const isCurrent = absIdx === idx;
+        return `<div class="queue-item ${isCurrent ? 'current' : ''}">
+          <div class="queue-num">${absIdx + 1}</div>
+          <div>${catName}</div>
+        </div>`;
+      }).join('');
+    }
+
+    // Timer sync: if we're in a question phase and timer isn't running, restart it
+    if (phase === 'question' && !timerInterval && state.timerStart) {
+      const limit = state.timeLimit || 20;
+      timerEnd = state.timerStart + limit * 1000;
+      const remaining = Math.ceil((timerEnd - Date.now()) / 1000);
+      if (remaining > 0) startTimer(state.timerStart, limit);
+      else clearTimer();
+    } else if (phase !== 'question') {
+      clearTimer();
+    }
+  }
+
+  GameState.onChange(renderState);
+  renderState(GameState.get());
+</script>
+</body>
+</html>

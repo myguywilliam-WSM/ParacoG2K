@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Join — Paraco Trivia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue: #5BA4CF;
+    --primary: #1B3A6B;
+    --primary-dark: #122850;
+    --accent: #5BA4CF;
+    --dark: #0c1724;
+    --dark2: #111f30;
+    --dark3: #182a3e;
+    --border: #1d3352;
+    --text: #eef2f7;
+    --muted: #6b90b0;
+    --green: #22c55e;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--dark);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background-image: radial-gradient(circle at 50% 0%, rgba(255,75,31,0.08) 0%, transparent 60%);
+  }
+
+  .card {
+    background: var(--dark2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2.5rem 2rem;
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+  }
+
+  .flame-icon {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 0.5rem;
+    animation: flicker 2s ease-in-out infinite;
+  }
+  @keyframes flicker {
+    0%, 100% { transform: scale(1) rotate(-2deg); }
+    50% { transform: scale(1.05) rotate(2deg); }
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.4rem;
+    color: var(--primary);
+    letter-spacing: 3px;
+    margin-bottom: 0.25rem;
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-bottom: 2rem;
+    letter-spacing: 0.5px;
+  }
+
+  /* Join form */
+  #joinSection { }
+  .input-wrap { margin-bottom: 1rem; }
+  input[type="text"] {
+    width: 100%;
+    background: var(--dark3);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    padding: 0.9rem 1rem;
+    font-size: 1.1rem;
+    font-family: 'DM Sans', sans-serif;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input[type="text"]:focus { border-color: var(--primary); }
+  input[type="text"]::placeholder { color: var(--muted); }
+
+  .btn-join {
+    width: 100%;
+    padding: 0.9rem;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .btn-join:hover { background: var(--primary-dark); }
+  .btn-join:active { transform: scale(0.98); }
+  .btn-join:disabled { background: #333; color: #666; cursor: not-allowed; }
+
+  .error-msg {
+    color: #ff6b6b;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    min-height: 1.2em;
+  }
+
+  /* Lobby */
+  #lobbySection { display: none; }
+  .joined-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    color: var(--accent);
+    margin: 0.75rem 0 0.25rem;
+  }
+  .lobby-status {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+  }
+  .pulse-ring {
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    border: 3px solid var(--primary);
+    margin: 1.5rem auto;
+    animation: pulse 1.5s ease-in-out infinite;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+  }
+  @keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.7; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .waiting-text { color: var(--muted); font-size: 0.9rem; }
+  .player-count-badge {
+    display: inline-block;
+    background: var(--dark3);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.35rem 1rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 1rem;
+  }
+  .player-count-badge span { color: var(--green); font-weight: 600; }
+
+  /* Active question view (for returning/already playing) */
+  #questionSection { display: none; }
+  .q-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.75rem;
+  }
+  .q-text {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+  }
+  .choices { display: flex; flex-direction: column; gap: 0.65rem; }
+  .choice-btn {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    background: var(--dark3);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 0.95rem;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 0.75rem;
+  }
+  .choice-btn:hover:not(:disabled) { border-color: var(--primary); background: rgba(255,75,31,0.08); }
+  .choice-btn.selected { border-color: var(--accent); background: rgba(255,184,0,0.1); }
+  .choice-btn.correct { border-color: var(--green); background: rgba(34,197,94,0.15); }
+  .choice-btn.wrong { border-color: #ef4444; background: rgba(239,68,68,0.1); opacity: 0.6; }
+  .choice-btn:disabled { cursor: default; }
+  .choice-label {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .answered-msg {
+    color: var(--green);
+    font-size: 0.9rem;
+    margin-top: 1rem;
+    display: none;
+  }
+
+  /* Scores screen */
+  #scoresSection { display: none; }
+  .score-list { text-align: left; margin-top: 1rem; }
+  .score-row {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .score-rank { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; color: var(--muted); width: 2rem; }
+  .score-rank.top { color: var(--accent); }
+  .score-name { flex: 1; font-weight: 500; }
+  .score-pts { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; color: var(--primary); }
+
+  /* Ended */
+  #endSection { display: none; }
+  .end-icon { font-size: 3rem; margin-bottom: 0.5rem; }
+  .end-title { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; color: var(--accent); margin-bottom: 0.5rem; }
+  .end-score { font-size: 1.1rem; color: var(--muted); }
+  .end-score span { color: var(--text); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <img src="Paraco_Logo.png" alt="Paraco" style="height:60px;width:auto;filter:brightness(0) invert(1);margin-bottom:0.75rem">
+  <h1>PARACO TRIVIA</h1>
+  <p class="subtitle">CEA Knowledge Challenge</p>
+
+  <!-- JOIN FORM -->
+  <div id="joinSection">
+    <div class="input-wrap">
+      <input type="text" id="nameInput" placeholder="Enter your name" maxlength="24" autocomplete="off">
+    </div>
+    <button class="btn-join" id="joinBtn" onclick="joinGame()">JOIN GAME</button>
+    <p class="error-msg" id="errorMsg"></p>
+  </div>
+
+  <!-- LOBBY WAITING -->
+  <div id="lobbySection">
+    <div class="joined-name" id="lobbyName"></div>
+    <p class="lobby-status">You're in the lobby!</p>
+    <div class="pulse-ring">⏳</div>
+    <p class="waiting-text">Waiting for the host to start...</p>
+    <div class="player-count-badge">
+      <span id="playerCountNum">1</span> player(s) in lobby
+    </div>
+  </div>
+
+  <!-- ACTIVE QUESTION -->
+  <div id="questionSection">
+    <div class="q-label" id="qLabel">Question 1</div>
+    <div class="q-text" id="qText"></div>
+    <div class="choices" id="choicesList"></div>
+    <p class="answered-msg" id="answeredMsg">✓ Answer locked in! Wait for results.</p>
+  </div>
+
+  <!-- SCORES -->
+  <div id="scoresSection">
+    <h2 style="font-family:'Bebas Neue',sans-serif;letter-spacing:1px;color:var(--accent);font-size:1.4rem">Scoreboard</h2>
+    <div class="score-list" id="scoreList"></div>
+  </div>
+
+  <!-- ENDED -->
+  <div id="endSection">
+    <div class="end-icon">🏆</div>
+    <div class="end-title">Game Over!</div>
+    <div class="end-score" id="endScore"></div>
+  </div>
+</div>
+
+<script src="questions.js"></script>
+<script src="state.js"></script>
+<script>
+  GameState.init();
+
+  let myName = sessionStorage.getItem('triviaPlayerName') || null;
+  let myAnswer = null;
+
+  function getQuestion(state) {
+    if (!state.currentQuestion) return null;
+    const { categoryId, questionId } = state.currentQuestion;
+    const cat = TRIVIA_DATA.categories.find(c => c.id === categoryId);
+    if (!cat) return null;
+    return cat.questions.find(q => q.id === questionId);
+  }
+
+  function joinGame() {
+    const name = document.getElementById('nameInput').value.trim();
+    const err = document.getElementById('errorMsg');
+    if (!name) { err.textContent = 'Please enter your name.'; return; }
+    if (name.length < 2) { err.textContent = 'Name must be at least 2 characters.'; return; }
+    const state = GameState.get();
+    if (state.players && state.players[name]) {
+      err.textContent = 'That name is already taken!'; return;
+    }
+    err.textContent = '';
+    myName = name;
+    sessionStorage.setItem('triviaPlayerName', name);
+    const players = { ...(state.players || {}), [name]: { score: 0, answered: false } };
+    GameState.set({ players });
+    renderState(GameState.get());
+  }
+
+  function submitAnswer(idx) {
+    if (myAnswer !== null) return;
+    myAnswer = idx;
+    const state = GameState.get();
+    const answers = { ...(state.answers || {}), [myName]: idx };
+    const players = { ...(state.players || {}) };
+    if (players[myName]) players[myName].answered = true;
+    GameState.set({ answers, players });
+    renderQuestion(state, true);
+  }
+
+  function renderQuestion(state, submitted) {
+    const q = getQuestion(state);
+    if (!q) return;
+    document.getElementById('qLabel').textContent =
+      `Question ${(state.currentIndex || 0) + 1} of ${(state.questionQueue || []).length}`;
+    document.getElementById('qText').textContent = q.question;
+
+    const labels = ['A', 'B', 'C', 'D'];
+    const showAns = state.showAnswer;
+    const choicesList = document.getElementById('choicesList');
+    choicesList.innerHTML = q.choices.map((choice, i) => {
+      let cls = 'choice-btn';
+      if (showAns) {
+        if (i === q.answer) cls += ' correct';
+        else if (myAnswer === i) cls += ' wrong';
+      } else if (myAnswer === i) cls += ' selected';
+      return `<button class="${cls}" ${(myAnswer !== null || showAns) ? 'disabled' : ''}
+        onclick="submitAnswer(${i})">
+        <div class="choice-label">${labels[i] || i + 1}</div>
+        <span>${choice}</span>
+      </button>`;
+    }).join('');
+
+    const answeredMsg = document.getElementById('answeredMsg');
+    answeredMsg.style.display = (myAnswer !== null && !showAns) ? 'block' : 'none';
+  }
+
+  function renderScores(state) {
+    const players = state.players || {};
+    const sorted = Object.entries(players).sort((a, b) => b[1].score - a[1].score);
+    document.getElementById('scoreList').innerHTML = sorted.map(([name, data], i) => `
+      <div class="score-row">
+        <div class="score-rank ${i === 0 ? 'top' : ''}">${i === 1 ? '' : ''}${i + 1}</div>
+        <div class="score-name">${name} ${name === myName ? '<span style="color:var(--muted);font-size:0.75rem">(you)</span>' : ''}</div>
+        <div class="score-pts">${data.score || 0}</div>
+      </div>
+    `).join('');
+  }
+
+  function renderState(state) {
+    const show = (id) => {
+      ['joinSection','lobbySection','questionSection','scoresSection','endSection'].forEach(s => {
+        document.getElementById(s).style.display = s === id ? 'block' : 'none';
+      });
+    };
+
+    if (!myName || !(state.players && state.players[myName])) {
+      show('joinSection'); return;
+    }
+
+    const playerCount = Object.keys(state.players || {}).length;
+    document.getElementById('playerCountNum').textContent = playerCount;
+
+    if (state.phase === 'lobby') {
+      document.getElementById('lobbyName').textContent = myName;
+      show('lobbySection');
+    } else if (state.phase === 'question') {
+      // Reset answer tracking when question changes
+      const currentAnswerForMe = (state.answers || {})[myName];
+      myAnswer = currentAnswerForMe !== undefined ? currentAnswerForMe : null;
+      show('questionSection');
+      renderQuestion(state, myAnswer !== null);
+    } else if (state.phase === 'reveal') {
+      show('questionSection');
+      renderQuestion(state, true);
+    } else if (state.phase === 'scores') {
+      show('scoresSection');
+      renderScores(state);
+    } else if (state.phase === 'ended') {
+      const myScore = (state.players[myName] || {}).score || 0;
+      const sorted = Object.values(state.players).sort((a, b) => b.score - a.score);
+      const rank = sorted.findIndex(p => p === state.players[myName]) + 1;
+      document.getElementById('endScore').innerHTML =
+        `You scored <span>${myScore} points</span> — Rank #${rank} of ${sorted.length}`;
+      show('endSection');
+    }
+  }
+
+  // Name input enter key
+  document.getElementById('nameInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') joinGame();
+  });
+
+  GameState.onChange(state => {
+    if (state.phase === 'question') myAnswer = (state.answers || {})[myName] ?? null;
+    renderState(state);
+  });
+
+  renderState(GameState.get());
+</script>
+</body>
+</html>
